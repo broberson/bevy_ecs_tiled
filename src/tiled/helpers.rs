@@ -152,3 +152,31 @@ pub(crate) fn iso_projection(
         y: (fract.x + fract.y) * grid_size.y / 2.,
     }
 }
+
+/// Projects Tiled staggered isometric coordinates into scalar coordinates for Bevy.
+///
+/// For staggered isometric maps, Tiled uses a different pixel coordinate layout than diamond
+/// isometric. In Tiled's staggered format (staggeraxis=Y, staggerindex=odd):
+/// - Pixel X = col * tilewidth + (row%2==1 ? tilewidth/2 : 0)
+/// - Pixel Y = row * tileheight/2
+///
+/// Bevy's tilemap crate uses a different world-space layout:
+/// - World X = (col + row/2) * tilewidth
+/// - World Y = row * tileheight/2
+///
+/// This function converts from Tiled's staggered pixel coordinates to Bevy world coordinates.
+///
+/// # Arguments
+/// - `coords`: The Tiled staggered pixel coordinates to project.
+/// - `grid_size`: The size of each tile on the grid in pixels.
+///
+/// # Returns
+/// The projected 2D coordinates as a [`Vec2`].
+pub(crate) fn staggered_projection(coords: Vec2, grid_size: &TilemapGridSize) -> Vec2 {
+    // k = row group offset (how many full tile-heights down we are)
+    let k = (coords.y / grid_size.y).floor();
+    Vec2 {
+        x: coords.x + k * grid_size.x,
+        y: coords.y,
+    }
+}

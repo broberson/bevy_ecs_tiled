@@ -93,10 +93,7 @@ fn draw_debug_gizmos(
             let positions = object
                 .line_string(
                     transform,
-                    matches!(
-                        tilemap_type_from_map(&map_asset.map),
-                        TilemapType::Isometric(..)
-                    ),
+                    tilemap_type_from_map(&map_asset.map),
                     &map_asset.tilemap_size,
                     &grid_size_from_map(&map_asset.map),
                     map_asset.tiled_offset,

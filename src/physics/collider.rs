@@ -126,10 +126,7 @@ pub(crate) fn spawn_colliders<T: TiledPhysicsBackend>(
                         TiledObject::from_object_data(&object)
                             .polygon(
                                 global_transform,
-                                matches!(
-                                    tilemap_type_from_map(&map_asset.map),
-                                    TilemapType::Isometric(..)
-                                ),
+                                tilemap_type_from_map(&map_asset.map),
                                 &map_asset.tilemap_size,
                                 &grid_size_from_map(&map_asset.map),
                                 map_asset.tiled_offset,

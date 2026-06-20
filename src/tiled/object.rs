@@ -3,7 +3,7 @@
 //! This module defines Bevy components used to represent Tiled objects within the ECS world.
 
 use crate::prelude::{geo::Centroid, *};
-use crate::tiled::helpers::iso_projection;
+use crate::tiled::helpers::{iso_projection, staggered_projection};
 use ::tiled::{HorizontalAlignment, VerticalAlignment};
 use bevy::prelude::*;
 
@@ -203,7 +203,7 @@ impl TiledObject {
     ///
     /// # Arguments
     /// * `transform` - The global transform to apply to the object.
-    /// * `isometric_projection` - Wheter or not to perform an isometric projection.
+    /// * `tilemap_type` - The type of tilemap (orthogonal, isometric, hex, staggered).
     /// * `tilemap_size` - Size of the tilemap in tiles.
     /// * `grid_size` - Size of each tile on the grid in pixels.
     /// * `offset` - Global map offset to apply.
@@ -213,14 +213,14 @@ impl TiledObject {
     pub fn center(
         &self,
         transform: &GlobalTransform,
-        isometric_projection: bool,
+        tilemap_type: TilemapType,
         tilemap_size: &TilemapSize,
         grid_size: &TilemapGridSize,
         offset: Vec2,
     ) -> Option<geo::Coord<f32>> {
         geo::MultiPoint::from(self.vertices(
             transform,
-            isometric_projection,
+            tilemap_type,
             tilemap_size,
             grid_size,
             offset,
@@ -236,7 +236,7 @@ impl TiledObject {
     ///
     /// # Arguments
     /// * `transform` - The global transform to apply to the object.
-    /// * `isometric_projection` - Wheter or not to perform an isometric projection.
+    /// * `tilemap_type` - The type of tilemap (orthogonal, isometric, hex, staggered).
     /// * `tilemap_size` - Size of the tilemap in tiles.
     /// * `grid_size` - Size of each tile on the grid in pixels.
     /// * `offset` - Global map offset to apply.
@@ -246,7 +246,7 @@ impl TiledObject {
     pub fn vertices(
         &self,
         transform: &GlobalTransform,
-        isometric_projection: bool,
+        tilemap_type: TilemapType,
         tilemap_size: &TilemapSize,
         grid_size: &TilemapGridSize,
         offset: Vec2,
@@ -292,14 +292,26 @@ impl TiledObject {
         .into_iter()
         .map(|v| {
             // Only perform isometric projection if requested by caller and if we do not handle a Tile
-            if isometric_projection && !matches!(self, TiledObject::Tile { .. }) {
-                let offset_projected = iso_projection(
-                    Vec2::new(offset.x + v.x, offset.y - v.y),
-                    tilemap_size,
-                    grid_size,
-                );
-                let origin_projected = iso_projection(offset, tilemap_size, grid_size);
-                let relative_projected = offset_projected - origin_projected;
+            let is_diamond = matches!(tilemap_type, TilemapType::Isometric(IsoCoordSystem::Diamond));
+            let is_staggered =
+                matches!(tilemap_type, TilemapType::Isometric(IsoCoordSystem::Staggered));
+
+            if (is_diamond || is_staggered) && !matches!(self, TiledObject::Tile { .. }) {
+                let relative_projected = if is_diamond {
+                    let offset_projected = iso_projection(
+                        Vec2::new(offset.x + v.x, offset.y - v.y),
+                        tilemap_size,
+                        grid_size,
+                    );
+                    let origin_projected = iso_projection(offset, tilemap_size, grid_size);
+                    offset_projected - origin_projected
+                } else {
+                    // Staggered: project both offset+v and offset, then subtract
+                    let offset_projected =
+                        staggered_projection(Vec2::new(offset.x + v.x, offset.y - v.y), grid_size);
+                    let origin_projected = staggered_projection(offset, grid_size);
+                    offset_projected - origin_projected
+                };
 
                 let v = Self::apply_rotation_and_scaling(true, relative_projected, transform);
                 geo::Coord {
@@ -325,7 +337,7 @@ impl TiledObject {
     ///
     /// # Arguments
     /// * `transform` - The global transform to apply to the object.
-    /// * `isometric_projection` - Wheter or not to perform an isometric projection.
+    /// * `tilemap_type` - The type of tilemap (orthogonal, isometric, hex, staggered).
     /// * `tilemap_size` - Size of the tilemap in tiles.
     /// * `grid_size` - Size of each tile on the grid in pixels.
     /// * `offset` - Global map offset to apply.
@@ -335,14 +347,14 @@ impl TiledObject {
     pub fn line_string(
         &self,
         transform: &GlobalTransform,
-        isometric_projection: bool,
+        tilemap_type: TilemapType,
         tilemap_size: &TilemapSize,
         grid_size: &TilemapGridSize,
         offset: Vec2,
     ) -> Option<geo::LineString<f32>> {
         let coords = self.vertices(
             transform,
-            isometric_projection,
+            tilemap_type,
             tilemap_size,
             grid_size,
             offset,
@@ -369,7 +381,7 @@ impl TiledObject {
     ///
     /// # Arguments
     /// * `transform` - The global transform to apply to the object.
-    /// * `isometric_projection` - Wheter or not to perform an isometric projection.
+    /// * `tilemap_type` - The type of tilemap (orthogonal, isometric, hex, staggered).
     /// * `tilemap_size` - Size of the tilemap in tiles.
     /// * `grid_size` - Size of each tile on the grid in pixels.
     /// * `offset` - Global map offset to apply.
@@ -379,14 +391,14 @@ impl TiledObject {
     pub fn polygon(
         &self,
         transform: &GlobalTransform,
-        isometric_projection: bool,
+        tilemap_type: TilemapType,
         tilemap_size: &TilemapSize,
         grid_size: &TilemapGridSize,
         offset: Vec2,
     ) -> Option<geo::Polygon<f32>> {
         self.line_string(
             transform,
-            isometric_projection,
+            tilemap_type,
             tilemap_size,
             grid_size,
             offset,

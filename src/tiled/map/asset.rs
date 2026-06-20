@@ -3,7 +3,7 @@
 //! This module defines asset structures, asset events, and the asset loader implementation for importing Tiled maps
 //! into Bevy's asset system.
 
-use crate::{prelude::*, tiled::helpers::iso_projection};
+use crate::{prelude::*, tiled::helpers::{iso_projection, staggered_projection}};
 use bevy::{platform::collections::HashMap, prelude::*};
 use std::fmt;
 
@@ -144,14 +144,16 @@ impl TiledMapAsset {
                     }
                 }
                 TilemapType::Isometric(IsoCoordSystem::Staggered) => {
-                    // For staggered isometric, the position calculation is simpler than diamond
-                    // Each row is offset by half a tile width, creating the staggered effect
-                    let row = tiled_position.y as u32;
-                    let col = tiled_position.x as u32;
-                    let offset_x = if row % 2 == 1 { grid_size.x / 2.0 } else { 0.0 };
+                    // For staggered isometric, use the staggered projection to convert
+                    // Tiled pixel coordinates to Bevy world coordinates
+                    let tiled_pixel_pos = Vec2::new(
+                        tiled_position.x + self.tiled_offset.x,
+                        tiled_position.y + self.tiled_offset.y,
+                    );
+                    let position = staggered_projection(tiled_pixel_pos, &grid_size);
                     Vec2 {
-                        x: col as f32 * grid_size.x + offset_x,
-                        y: map_height - (row as f32 * grid_size.y * 0.5) - grid_size.y,
+                        x: position.x,
+                        y: map_height - position.y - grid_size.y,
                     }
                 }
                 _ => unreachable!(),
@@ -292,7 +294,7 @@ impl TiledMapAsset {
     ) -> Option<geo::Coord<f32>> {
         tiled_object.center(
             transform,
-            matches!(tilemap_type_from_map(&self.map), TilemapType::Isometric(..)),
+            tilemap_type_from_map(&self.map),
             &self.tilemap_size,
             &grid_size_from_map(&self.map),
             self.tiled_offset,
@@ -314,7 +316,7 @@ impl TiledMapAsset {
     ) -> Vec<geo::Coord<f32>> {
         tiled_object.vertices(
             transform,
-            matches!(tilemap_type_from_map(&self.map), TilemapType::Isometric(..)),
+            tilemap_type_from_map(&self.map),
             &self.tilemap_size,
             &grid_size_from_map(&self.map),
             self.tiled_offset,
@@ -336,7 +338,7 @@ impl TiledMapAsset {
     ) -> Option<geo::LineString<f32>> {
         tiled_object.line_string(
             transform,
-            matches!(tilemap_type_from_map(&self.map), TilemapType::Isometric(..)),
+            tilemap_type_from_map(&self.map),
             &self.tilemap_size,
             &grid_size_from_map(&self.map),
             self.tiled_offset,
@@ -358,7 +360,7 @@ impl TiledMapAsset {
     ) -> Option<geo::Polygon<f32>> {
         tiled_object.polygon(
             transform,
-            matches!(tilemap_type_from_map(&self.map), TilemapType::Isometric(..)),
+            tilemap_type_from_map(&self.map),
             &self.tilemap_size,
             &grid_size_from_map(&self.map),
             self.tiled_offset,
