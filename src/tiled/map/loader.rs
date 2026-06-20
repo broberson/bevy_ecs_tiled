@@ -240,7 +240,7 @@ impl AssetLoader for TiledMapLoader {
             }
         }
 
-        let (tilemap_size, tiled_offset) = if infinite {
+        let (mut tilemap_size, tiled_offset) = if infinite {
             debug!(
                 "(infinite map) topleft = {:?}, bottomright = {:?}",
                 topleft, bottomright
@@ -287,6 +287,17 @@ impl AssetLoader for TiledMapLoader {
                 Vec2::ZERO,
             )
         };
+
+        // For staggered isometric maps, the Y-flip in for_each_tile (y = tilemap_size.y - 1 - tiled_y)
+        // inverts the stagger parity when tilemap_size.y is even, causing the wrong rows to be offset.
+        // Ensure tilemap_size.y is odd so the Y-flip preserves stagger parity.
+        if matches!(
+            map_type,
+            TilemapType::Isometric(IsoCoordSystem::Staggered)
+        ) && tilemap_size.y % 2 == 0
+        {
+            tilemap_size.y += 1;
+        }
 
         let rect = Rect {
             min: Vec2::ZERO,
