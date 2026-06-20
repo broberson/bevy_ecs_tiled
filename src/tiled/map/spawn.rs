@@ -319,9 +319,19 @@ fn spawn_tiles_layer(
                 size: tiled_map.tilemap_size,
                 storage: _tile_storage,
                 texture: t.tilemap_texture.clone(),
-                tile_size: TilemapTileSize {
-                    x: tileset.tile_width as f32,
-                    y: tileset.tile_height as f32,
+                tile_size: if matches!(
+                    tilemap_type_from_map(&tiled_map.map),
+                    TilemapType::Isometric(IsoCoordSystem::Staggered)
+                ) {
+                    TilemapTileSize {
+                        x: grid_size.x,
+                        y: grid_size.y,
+                    }
+                } else {
+                    TilemapTileSize {
+                        x: tileset.tile_width as f32,
+                        y: tileset.tile_height as f32,
+                    }
                 },
                 spacing: TilemapSpacing {
                     x: tileset.spacing as f32,
