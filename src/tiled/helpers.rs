@@ -82,8 +82,6 @@ pub fn get_object_from_map(map: &tiled::Map, object_id: u32) -> Option<tiled::Ob
 }
 
 /// Converts a [`tiled::Map`]'s [`tiled::Orientation`] to a [`TilemapType`].
-///
-/// Panics if the orientation is [`tiled::Orientation::Staggered`] which is not supported by this plugin.
 pub fn tilemap_type_from_map(map: &tiled::Map) -> TilemapType {
     match map.orientation {
         tiled::Orientation::Orthogonal => TilemapType::Square,
@@ -103,9 +101,7 @@ pub fn tilemap_type_from_map(map: &tiled::Map) -> TilemapType {
             _ => unreachable!(),
         },
         tiled::Orientation::Isometric => TilemapType::Isometric(IsoCoordSystem::Diamond),
-        tiled::Orientation::Staggered => {
-            panic!("Isometric (Staggered) map is not supported");
-        }
+        tiled::Orientation::Staggered => TilemapType::Isometric(IsoCoordSystem::Staggered),
     }
 }
 

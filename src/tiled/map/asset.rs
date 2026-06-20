@@ -144,7 +144,15 @@ impl TiledMapAsset {
                     }
                 }
                 TilemapType::Isometric(IsoCoordSystem::Staggered) => {
-                    panic!("Isometric (Staggered) map is not supported");
+                    // For staggered isometric, the position calculation is simpler than diamond
+                    // Each row is offset by half a tile width, creating the staggered effect
+                    let row = tiled_position.y as u32;
+                    let col = tiled_position.x as u32;
+                    let offset_x = if row % 2 == 1 { grid_size.x / 2.0 } else { 0.0 };
+                    Vec2 {
+                        x: col as f32 * grid_size.x + offset_x,
+                        y: map_height - (row as f32 * grid_size.y * 0.5) - grid_size.y,
+                    }
                 }
                 _ => unreachable!(),
             }

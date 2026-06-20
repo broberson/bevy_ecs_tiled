@@ -269,9 +269,10 @@ impl AssetLoader for TiledMapLoader {
                         x: -topleft.0 as f32 * tiled::ChunkData::WIDTH as f32 * grid_size.y,
                         y: -topleft.1 as f32 * tiled::ChunkData::HEIGHT as f32 * grid_size.y,
                     },
-                    TilemapType::Isometric(IsoCoordSystem::Staggered) => {
-                        panic!("Isometric (Staggered) map is not supported");
-                    }
+                    TilemapType::Isometric(IsoCoordSystem::Staggered) => Vec2 {
+                        x: -topleft.0 as f32 * tiled::ChunkData::WIDTH as f32 * grid_size.x,
+                        y: topleft.1 as f32 * tiled::ChunkData::HEIGHT as f32 * grid_size.y * 0.5,
+                    },
                     _ => unreachable!(),
                 },
             )
@@ -317,9 +318,10 @@ impl AssetLoader for TiledMapLoader {
 
                     2. * (topright - topleft)
                 }
-                TilemapType::Isometric(IsoCoordSystem::Staggered) => {
-                    panic!("Isometric (Staggered) map is not supported");
-                }
+                TilemapType::Isometric(IsoCoordSystem::Staggered) => Vec2 {
+                    x: tilemap_size.x as f32 * grid_size.x,
+                    y: tilemap_size.y as f32 * grid_size.y * 0.5,
+                },
                 _ => unreachable!(),
             },
         };

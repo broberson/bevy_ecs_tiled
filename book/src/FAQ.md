@@ -19,9 +19,8 @@ Nearly all map types from Tiled are supported:
 - "Flat-top" hexagonal
 - "Pointy-top" hexagonal
 - "Diamond" isometric
+- "Staggered" isometric
 
-**Not supported:**
-Isometric "staggered" maps ([see issue #31](https://github.com/adrien-bon/bevy_ecs_tiled/issues/31)).
 
 While we support isometric maps, we currently [do not support isometric tilesets](https://github.com/adrien-bon/bevy_ecs_tiled/issues/129).
 But you can still use an isometric map with an orthogonal tileset.
@@ -56,7 +55,7 @@ You can customize world loading with the same components and events / observers 
 
 ## I’m using an isometric map and it seems all messed up!
 
-- Make sure you are actually using a "diamond" isometric map, not a "staggered" one (which is not supported).
+- Both "diamond" and "staggered" isometric orientations are now supported.
 - For isometric maps, you may need to tweak the [`TilemapRenderSettings`](https://docs.rs/bevy_ecs_tilemap/latest/bevy_ecs_tilemap/map/struct.TilemapRenderSettings.html) component from `bevy_ecs_tilemap` to enable Y-sorting and adjust the chunk size.
 - Make sure you are using [an orthogonal tileset and not an isometric one](https://github.com/adrien-bon/bevy_ecs_tiled/issues/129).
 
